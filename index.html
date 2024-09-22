@@ -136,126 +136,105 @@ div.gallery{
   <button>Send a review!</button>
 </a>
 
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Comment Box</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width" />
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-      div.form-group1 {
-          background-color: blueviolet;
-      }
-      .comments {
-          margin-top: 20px;
-          max-height: 300px; /* Set a max height for the scrollable area */
-          overflow-y: auto; /* Enable vertical scrolling */
-          border: 1px solid #ccc; /* Optional: border for the comments section */
-          padding: 10px; /* Optional: padding for better appearance */
-      }
-      .comment {
-          border: 1px solid #ccc;
-          margin-bottom: 10px;
-          padding: 10px;
-          border-radius: 5px;
-          position: relative; /* Allow positioning of the delete button */
-      }
-      .delete-btn {
-          position: absolute; /* Position the button relative to the comment */
-          top: 5px;
-          right: 5px;
-          background-color: red;
-          color: white;
-          border: none;
-          padding: 5px;
-          cursor: pointer;
-      }
-  </style>
+    <title>Comment Box</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        div.form-group1 {
+            background-color: blueviolet;
+        }
+        .comments {
+            margin-top: 20px;
+            max-height: 300px; /* Set a max height for the scrollable area */
+            overflow-y: auto; /* Enable vertical scrolling */
+            border: 1px solid #ccc; /* Optional: border for the comments section */
+            padding: 10px; /* Optional: padding for better appearance */
+        }
+        .comment {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-      <div class="comment-box gradient-bg">
-          <h2 class="comment-title">Join the conversation</h2>
-          <form id="commentForm">
-              <div class="form-group">
-                  <label for="name">Name:</label>
-                  <input type="text" id="name" name="name" placeholder="Enter your name" required>
-              </div>
-              <div class="form-group">
-                  <label for="email">Email:</label>
-                  <input type="email" id="email" name="email" placeholder="Enter your email**NREQ**">
-              </div>
-              <div class="form-group1">
-                  <label for="comment">Comment:</label>
-                  <textarea id="comment" name="comment" placeholder="Type your comment here" required></textarea>
-              </div>
-              <button type="submit" class="btn-submit">Submit</button>
-          </form>
-          <div class="comments" id="commentsSection"></div>
-      </div>
-  </div>
-  
-  <script>
-      const form = document.getElementById('commentForm');
-      const commentsSection = document.getElementById('commentsSection');
-      const adminEmail = "nickream465@gmail.com"; // Set your admin email
+    <div class="container">
+        <div class="comment-box gradient-bg">
+            <h2 class="comment-title">Join the conversation</h2>
+            <form id="commentForm">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group1">
+                    <label for="comment">Comment:</label>
+                    <textarea id="comment" name="comment" placeholder="Type your comment here" required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Submit</button>
+            </form>
+            <div class="comments" id="commentsSection"></div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('commentForm');
+        const commentsSection = document.getElementById('commentsSection');
+        const apiUrl = '/comments'; // Use relative path for the API
 
-      // Load comments from Local Storage
-      function loadComments() {
-          const comments = JSON.parse(localStorage.getItem('comments')) || [];
-          comments.forEach(comment => {
-              displayComment(comment.name, comment.comment, comment.email);
-          });
-      }
+        // Load comments from the server
+        async function loadComments() {
+            const response = await fetch(apiUrl);
+            const comments = await response.json();
+            comments.forEach(comment => {
+                displayComment(comment.name, comment.comment);
+            });
+        }
 
-      // Display a single comment
-      function displayComment(name, comment, email) {
-          const commentDiv = document.createElement('div');
-          commentDiv.classList.add('comment');
-          commentDiv.innerHTML = `
-              <strong>${name}</strong>: <p>${comment}</p>
-              <button class="delete-btn" onclick="deleteComment('${email}')">Delete</button>
-          `;
-          commentsSection.appendChild(commentDiv);
-      }
-      function deleteComment(email) {
-          if (email !== adminEmail) {
-              alert("You do not have permission to delete comments.");
-              return;
-          }
+        // Display a single comment
+        function displayComment(name, comment) {
+            const commentDiv = document.createElement('div');
+            commentDiv.classList.add('comment');
+            commentDiv.innerHTML = `<strong>${name}</strong>: <p>${comment}</p>`;
+            commentsSection.appendChild(commentDiv);
+        }
 
-          // Remove the comment from Local Storage
-          let comments = JSON.parse(localStorage.getItem('comments')) || [];
-          comments = comments.filter(comment => comment.email !== email);
-          localStorage.setItem('comments', JSON.stringify(comments));
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
 
-          // Refresh the comments display
-          commentsSection.innerHTML = '';
-          loadComments();
-      }
+            const name = document.getElementById('name').value;
+            const comment = document.getElementById('comment').value;
+            const email = document.getElementById('email').value;
 
-      form.addEventListener('submit', function(event) {
-          event.preventDefault(); // Prevent the default form submission
+            // Post the comment to the server
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, comment }),
+            });
 
-          const name = document.getElementById('name').value;
-          const comment = document.getElementById('comment').value;
-          const email = document.getElementById('email').value; // Get email for deletion check
+            // Display the new comment
+            displayComment(name, comment);
 
-          // Save the comment to Local Storage
-          const comments = JSON.parse(localStorage.getItem('comments')) || [];
-          comments.push({ name, comment, email }); // Store email with comment
-          localStorage.setItem('comments', JSON.stringify(comments));
+            // Clear the form
+            form.reset();
+        });
 
-          // Display the new comment
-          displayComment(name, comment, email);
-
-          // Clear the form
-          form.reset();
-      });
-
-      // Load comments on page load
-      loadComments();
-  </script>
+        // Load comments on page load
+        loadComments();
+    </script>
 </body>
+</html>
 <style>
   div.container{
     background-color: gray;
